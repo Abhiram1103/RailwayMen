@@ -106,13 +106,33 @@ app.post("/api/data", async (req, res) => {
 
 app.get("/api/data", async (req, res) => {
   try {
+    console.log('Fetching data from MongoDB...');
     const sectionControllers = await SectionController.find();
+    console.log(`Found ${sectionControllers.length} section controllers`);
+    
     const stations = await Station.find();
+    console.log(`Found ${stations.length} stations`);
+    
     const trains = await Train.find();
+    console.log(`Found ${trains.length} trains`);
+
+    if (sectionControllers.length === 0 && stations.length === 0 && trains.length === 0) {
+      return res.json({ 
+        message: "No data found. Please add some data using POST /api/data",
+        sectionControllers, 
+        stations, 
+        trains 
+      });
+    }
 
     res.json({ sectionControllers, stations, trains });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching data:', err);
+    res.status(500).json({ 
+      error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      mongoUri: MONGO_URI ? 'MongoDB URI is set' : 'MongoDB URI is missing'
+    });
   }
 });
 
